@@ -1,5 +1,6 @@
 import "./App.css";
 import Home from "./pages/Home";
+import DetailProduct from "./pages/DetailProduct";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Modal from "react-modal";
 
@@ -10,7 +11,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/cart" element={<div>Cart Page</div>} />
+          <Route path="/product/:id" element={<DetailProduct />} />
         </Routes>
       </BrowserRouter>
     </>

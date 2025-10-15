@@ -34,47 +34,52 @@ function AddProductModal({ isOpen, onClose }) {
       isOpen={isOpen}
       onClose={onClose}
       appElement={document.getElementById("root")}
-      className="bg-white p-6 rounded shadow-lg max-w-lg mx-auto mt-20"
+      className="bg-white p-6 rounded shadow-lg max-w-lg mx-auto mt-20 border border-gray-300"
     >
-      <h2 className="text-2xl mb-4">Add New Product</h2>
+      <h2 className="text-2xl mb-4 text-green-500 font-bold mx-auto">
+        Thêm sản phẩm mới
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <label>
-          Product Name:
+          Tên sản phẩm:
           <input
             type="text"
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
-            className="border p-2 w-full"
+            placeholder="Nhập tên sản phẩm"
+            className="border p-2 mb-4 w-full bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded transition-colors duration-300 hover:bg-gray-100"
             required
           />
         </label>
         <label>
-          Product Price:
+          Giá sản phẩm:
           <input
             type="number"
             value={productPrice}
             onChange={(e) => setProductPrice(e.target.value)}
-            className="border p-2 w-full"
+            placeholder="Nhập giá sản phẩm"
+            className="border p-2 mb-4 w-full bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded transition-colors duration-300 hover:bg-gray-100"
             required
           />
         </label>
         <label>
-          Product Description:
+          Mô tả sản phẩm:
           <textarea
             value={productDescription}
             onChange={(e) => setProductDescription(e.target.value)}
-            className="border p-2 w-full"
+            placeholder="Nhập mô tả sản phẩm"
+            className="border p-2 mb-4 w-full bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded transition-colors duration-300 hover:bg-gray-100"
             required
           />
         </label>
         <label>
-          Product Image:
+          Hình ảnh sản phẩm:
           <input
             type="url"
             value={productImage}
             onChange={(e) => setProductImage(e.target.value)}
-            placeholder="Image URL"
-            className="border p-2 w-full"
+            placeholder="URL hình ảnh"
+            className="border p-2 mb-4 w-full bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded transition-colors duration-300 hover:bg-gray-100"
             required
           />
         </label>
