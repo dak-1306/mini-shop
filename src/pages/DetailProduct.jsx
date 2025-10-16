@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import useStore from "../store/store";
 import Button from "../layout/Button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus as AddIcon } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft as BackIcon } from "@fortawesome/free-solid-svg-icons";
 function DetailProduct() {
   const { id } = useParams();
   const { products, addToCart } = useStore();
@@ -28,14 +31,14 @@ function DetailProduct() {
         <p className="text-gray-700 mb-4">{product.description}</p>
         <p className="text-xl font-bold mb-4">${product.price}</p>
         <Button onClick={() => addToCart(product)} variant="success">
-          Add to Cart
+          <FontAwesomeIcon icon={AddIcon} /> Add to Cart
         </Button>
         <Button
           onClick={() => window.history.back()}
           variant="secondary"
           className="ml-2"
         >
-          Go Back
+          <FontAwesomeIcon icon={BackIcon} /> Go Back
         </Button>
       </div>
     </div>

@@ -1,4 +1,7 @@
 import Button from "../layout/Button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus as AddIcon } from "@fortawesome/free-solid-svg-icons";
+
 function Filter({
   handleAddProduct,
   categories,
@@ -13,7 +16,7 @@ function Filter({
             className="border border-gray-300 rounded px-4 py-2"
             onChange={(e) => onSelectCategories(e.target.value)}
           >
-            <option>All Categories</option>
+            <option className="font-bold">All Categories</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -31,7 +34,7 @@ function Filter({
           </select>
         </div>
         <Button variant="primary" onClick={handleAddProduct}>
-          Thêm sản phẩm
+          <FontAwesomeIcon icon={AddIcon} /> Thêm sản phẩm
         </Button>
       </div>
     </>

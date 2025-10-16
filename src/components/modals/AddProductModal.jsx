@@ -2,6 +2,10 @@ import { useState } from "react";
 import Modal from "react-modal";
 import useStore from "../../store/store";
 import Button from "../../layout/Button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus as AddIcon } from "@fortawesome/free-solid-svg-icons";
+import { faTimes as CloseIcon } from "@fortawesome/free-solid-svg-icons";
+
 function AddProductModal({ isOpen, onClose }) {
   //Hàm xử lý thêm sản phẩm
   const { addProduct } = useStore();
@@ -85,18 +89,15 @@ function AddProductModal({ isOpen, onClose }) {
         </label>
         <div className="flex justify-end space-x-2">
           <Button
-            className="bg-gray-300 text-gray-800 px-4 py-2 rounded cursor-pointer"
+            className=""
             type="button"
             onClick={onClose}
-            variant="secondary"
+            variant="danger"
           >
-            Cancel
+            <FontAwesomeIcon icon={CloseIcon} />
           </Button>
-          <Button
-            className="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer"
-            type="submit"
-          >
-            Add Product
+          <Button className="" variant="success" gradient={true} type="submit">
+            <FontAwesomeIcon icon={AddIcon} /> Thêm sản phẩm
           </Button>
         </div>
       </form>

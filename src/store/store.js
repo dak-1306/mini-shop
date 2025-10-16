@@ -24,9 +24,7 @@ const useStore = create((set) => ({
   //fetch products từ JSONPlaceholder
   fetchProducts: async () => {
     try {
-      const response = await fetch(
-        "https://api.escuelajs.co/api/v1/products?limit=20&offset=0"
-      );
+      const response = await fetch("https://api.escuelajs.co/api/v1/products");
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }

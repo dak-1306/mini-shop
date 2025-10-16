@@ -1,12 +1,14 @@
 import Button from "../layout/Button";
 import { Link } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus as AddIcon } from "@fortawesome/free-solid-svg-icons";
 function ProductCard({ product, addToCart }) {
   return (
     <div className="border-none border-gray-300 rounded p-4 bg-white shadow hover:shadow-lg transition-shadow duration-300 cursor-pointer flex flex-col justify-between">
       <img
         src={product.image}
         alt={product.name}
-        className="w-full h-48 object-cover mb-4 "
+        className="w-full h-48 object-cover mb-4 rounded"
       />
       <h2 className="text-lg font-semibold">{product.name}</h2>
       <p className="text-gray-600">{product.description}</p>
@@ -23,7 +25,7 @@ function ProductCard({ product, addToCart }) {
         className="mt-2"
         variant="success"
       >
-        Add to Cart
+        <FontAwesomeIcon icon={AddIcon} /> Add to Cart
       </Button>
     </div>
   );

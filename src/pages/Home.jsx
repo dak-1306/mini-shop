@@ -8,6 +8,7 @@ import Search from "../components/search";
 import ProductCard from "../components/productCard";
 import Filter from "../components/filter";
 import Categories from "../components/Categories";
+import Pagination from "../components/Pagination";
 
 //Modals
 import AddProductModal from "../components/modals/AddProductModal";
@@ -19,16 +20,6 @@ import useStore from "../store/store";
 import { useState, useEffect } from "react";
 
 function Home() {
-  // State để quản lý modal thêm sản phẩm
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-
-  // State để quản lý modal giỏ hàng
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const openCart = () => setIsCartOpen(true);
-  const closeCart = () => setIsCartOpen(false);
-
   // Lấy danh sách sản phẩm và giỏ hàng từ store
   const {
     products,
@@ -39,6 +30,20 @@ function Home() {
     categories,
     fetchCategories,
   } = useStore();
+
+  // State để quản lý modal thêm sản phẩm
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  // State để quản lý modal giỏ hàng
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const openCart = () => setIsCartOpen(true);
+  const closeCart = () => setIsCartOpen(false);
+
+  //State phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // State để quản lý kết quả tìm kiếm
   const [searchResults, setSearchResults] = useState(products);
@@ -87,6 +92,19 @@ function Home() {
     setSearchResults(filteredProducts);
   };
 
+  // Tính toán tổng số trang
+  const totalPages = Math.ceil(searchResults.length / itemsPerPage);
+  // Lấy sản phẩm cho trang hiện tại
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const sourceList = searchResults;
+  const currentItems = sourceList.slice(indexOfFirstItem, indexOfLastItem);
+
+  //reset currentPage khi currentItems thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sourceList.length]);
+
   // Cập nhật kết quả tìm kiếm khi danh sách sản phẩm thay đổi
   useEffect(() => {
     setSearchResults(products);
@@ -133,7 +151,7 @@ function Home() {
           {searchResults.length === 0 ? (
             <p>No products found</p>
           ) : (
-            searchResults.map((product) => (
+            currentItems.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -142,6 +160,11 @@ function Home() {
             ))
           )}
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </main>
       <Footer />
     </>

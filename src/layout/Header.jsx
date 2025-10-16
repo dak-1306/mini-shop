@@ -1,5 +1,10 @@
 import { Link } from "react-router-dom";
-import { CartIcon, HomeIcon } from "../assets/icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHouse,
+  faUser,
+  faShoppingCart,
+} from "@fortawesome/free-solid-svg-icons";
 function Header({ openCart }) {
   return (
     <>
@@ -8,8 +13,13 @@ function Header({ openCart }) {
         <nav className="m-3">
           <ul className="flex space-x-4 list-none p-0 m-0">
             <li className="mr-4 cursor-pointer">
-              <Link to="/" className="hover:underline">
-                <HomeIcon className="h-8 w-8" gradient />
+              <Link to="/" className="hover:underline ">
+                <FontAwesomeIcon className="h-6 w-6" icon={faHouse} />
+              </Link>
+            </li>
+            <li className="mr-4 cursor-pointer">
+              <Link to="/profile" className="hover:underline">
+                <FontAwesomeIcon className="h-6 w-6" icon={faUser} />
               </Link>
             </li>
             <li>
@@ -17,7 +27,7 @@ function Header({ openCart }) {
                 onClick={openCart}
                 className="hover:underline cursor-pointer"
               >
-                <CartIcon className="h-8 w-8" gradient />
+                <FontAwesomeIcon className="h-6 w-6" icon={faShoppingCart} />
               </button>
             </li>
           </ul>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Button from "../layout/Button";
-import { SearchIcon } from "../assets/icons";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 function Search({ onSearch }) {
   const [query, setQuery] = useState("");
   const handleSubmit = (e) => {
@@ -19,7 +20,7 @@ function Search({ onSearch }) {
         onChange={(e) => setQuery(e.target.value)}
       />
       <Button type="submit" variant="success" className="ml-2">
-        <SearchIcon className="h-5 w-5" bgColor />
+        <FontAwesomeIcon icon={faSearch} />
       </Button>
     </form>
   );
