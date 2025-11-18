@@ -1,12 +1,12 @@
+/* font */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@500;600;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
-
-/* font */
-@import "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* shadcn/ui */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -49,6 +49,7 @@
   --font-heading: "Poppins", sans-serif;
   --font-body: "Inter", sans-serif;
 
+  /* shadcn/ui */
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -84,6 +85,7 @@
 }
 
 .dark {
+  /* shadcn/ui */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -125,10 +127,11 @@
     @apply bg-background text-foreground;
   }
 }
-
-body {
+/* font */
+html {
   font-family: var(--font-body);
 }
+
 h1,
 h2,
 h3,
