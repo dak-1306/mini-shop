@@ -23,10 +23,7 @@ function Header() {
   };
 
   return (
-    <header
-      style={{ background: "#043F2E" }}
-      className="p-4 text-white flex justify-between items-center"
-    >
+    <header className="p-4 text-white flex justify-between items-center bg-[var(--color-bg-header)] shadow-md">
       <Tooltip>
         <TooltipTrigger asChild>
           <h1 className="text-2xl font-bold">

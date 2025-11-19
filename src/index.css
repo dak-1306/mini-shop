@@ -49,6 +49,11 @@
   --font-heading: "Poppins", sans-serif;
   --font-body: "Inter", sans-serif;
 
+  /* color background */
+  --color-bg-header: #043f2e;
+  --color-bg-footer: #032c21;
+  --color-bg-main: #f6f7f5;
+
   /* shadcn/ui */
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -57,7 +62,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(42.111% 0.1425 142.277);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
