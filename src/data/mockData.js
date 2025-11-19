@@ -143,3 +143,102 @@ export const mockProducts = [
     sku: "HSE-01",
   },
 ];
+
+// Mock data phục vụ trang Profile / account
+export const mockUsers = [
+  {
+    id: "u1",
+    name: "Nguyễn Văn A",
+    username: "nguyenvana",
+    email: "a@example.com",
+    avatar: "https://i.pravatar.cc/150?img=3",
+    role: "buyer", // buyer | seller | admin
+    bio: "Yêu thích trái cây tươi và nấu ăn tại nhà.",
+    phone: "0901234567",
+    address: {
+      line1: "123 Đường A",
+      line2: "Phường B",
+      city: "Hà Nội",
+      province: "Hà Nội",
+      postalCode: "100000",
+      country: "VN",
+    },
+    stats: {
+      ordersCount: 5,
+      totalSpent: 580000, // in VND
+      wishlistCount: 3,
+    },
+    favorites: ["p-c1-1", "p-c3-1"],
+    paymentMethods: [
+      {
+        id: "pm1",
+        type: "card",
+        brand: "VISA",
+        last4: "4242",
+        expiry: "12/26",
+      },
+    ],
+    orders: [
+      {
+        id: "o1",
+        items: [
+          { productId: "p-c1-1", name: "Red Apple", price: 12000, qty: 3 },
+          { productId: "p-c3-2", name: "Mineral Water", price: 5000, qty: 2 },
+        ],
+        subtotal: 46000,
+        shipping: 0,
+        total: 46000,
+        status: "delivered", // pending | shipped | delivered | cancelled
+        createdAt: "2024-10-01T10:24:00.000Z",
+        shippingAddress: null,
+      },
+      {
+        id: "o2",
+        items: [
+          { productId: "p-c4-1", name: "Potato Chips", price: 18000, qty: 2 },
+        ],
+        subtotal: 36000,
+        shipping: 0,
+        total: 36000,
+        status: "processing",
+        createdAt: "2025-02-15T14:10:00.000Z",
+        shippingAddress: null,
+      },
+    ],
+    createdAt: "2024-01-10T08:00:00.000Z",
+  },
+
+  {
+    id: "u2",
+    name: "Trần Thị B",
+    username: "tranthib",
+    email: "b@example.com",
+    avatar: "https://i.pravatar.cc/150?img=5",
+    role: "seller",
+    bio: "Người bán rau sạch tại địa phương.",
+    phone: "0912345678",
+    address: {
+      line1: "456 Đường X",
+      line2: "Phường Y",
+      city: "Hồ Chí Minh",
+      province: "TPHCM",
+      postalCode: "700000",
+      country: "VN",
+    },
+    stats: {
+      productsCount: 12,
+      ordersCount: 78,
+      rating: 4.7,
+    },
+    favorites: [],
+    paymentMethods: [],
+    orders: [], // seller sẽ có orders differently if needed
+    createdAt: "2023-07-20T09:30:00.000Z",
+  },
+];
+
+export function getUserById(id) {
+  return mockUsers.find((u) => u.id === id) || null;
+}
+
+export default mockUsers;
