@@ -35,7 +35,7 @@ export default function CategoryCard({ category = {}, onClick, className }) {
       )}
     >
       <img
-        src={category.image || "/placeholder-category.png"}
+        src={category.url || "/placeholder-category.png"}
         alt={category.name || "category image"}
         className="w-full h-36 object-cover"
       />

@@ -58,17 +58,17 @@ export default function ProductCard({
         {/* make content full width and align start so title/description can use full width */}
         <div className="flex flex-col items-start gap-4 w-full p-4">
           <img
-            src={product.image}
-            alt={product.name}
+            src={product.thumbnail}
+            alt={product.title}
             className="w-48 h-48 object-cover rounded flex-shrink-0"
           />
           <CardContent className="w-full">
             <CardHeader className="px-0">
-              <CardTitle className="w-full truncate" title={product.name}>
-                {product.name}
+              <CardTitle className="w-full truncate" title={product.title}>
+                {product.title}
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground line-clamp-2">
-                {product.shortDescription}
+                {product.description}
               </CardDescription>
             </CardHeader>
 

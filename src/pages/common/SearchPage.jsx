@@ -2,49 +2,43 @@ import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import MainLayout from "../../components/layout/MainLayout";
 import ProductCard from "../../components/common/ProductCard";
-import { mockCategories, mockProducts } from "../../data/mockData";
 import { Button } from "@/components/ui/button";
-
-import CategorySection from "../../components/common/CategorySection";
+import Pagination from "@/components/ui/pagination";
+import { useProducts, useCategories } from "@/hooks/useProducts";
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const query = (searchParams.get("query") || "").trim();
-  const categoryId = (searchParams.get("category") || "").trim();
+  const category = (searchParams.get("category") || "").trim(); // slug like "beauty"
 
-  function handleCategorySelect(cat) {
-    // chuyển hướng tới SearchPage, truyền category id qua query string
-    navigate(`/search?category=${encodeURIComponent(cat?.id ?? "")}`);
-  }
-  // build filtered products
-  const products = React.useMemo(() => {
-    let items = mockProducts;
+  const PAGE_SIZE = 20;
+  const [page, setPage] = React.useState(1);
 
-    if (categoryId) {
-      items = items.filter((p) => p.categoryId === categoryId);
-    }
+  // reset page when search params change
+  React.useEffect(() => {
+    setPage(1);
+  }, [query, category]);
 
-    if (query) {
-      const q = query.toLowerCase();
-      items = items.filter(
-        (p) =>
-          String(p.name).toLowerCase().includes(q) ||
-          String(p.shortDescription || "")
-            .toLowerCase()
-            .includes(q)
-      );
-    }
+  // server-side support: useProducts handles search AND category (calls appropriate endpoints)
+  const { data, isLoading, isError, error, isFetching } = useProducts({
+    page,
+    limit: PAGE_SIZE,
+    search: query,
+    category,
+  });
 
-    return items;
-  }, [categoryId, query]);
+  const { data: categoriesData } = useCategories();
+  const categories = categoriesData ?? [];
 
-  const category = mockCategories.find((c) => c.id === categoryId) ?? null;
+  const products = data?.products ?? [];
+  const total = data?.total ?? 0;
+
   const heading = query
     ? `Kết quả tìm kiếm: "${query}"`
     : category
-    ? category.name
+    ? `Danh mục: ${category}`
     : "Tìm kiếm";
 
   return (
@@ -52,6 +46,7 @@ export default function SearchPage() {
       <div className="w-[80%] mx-auto space-y-6 p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">{heading}</h2>
+
           <div className="flex items-center gap-2">
             <Button
               variant="link"
@@ -60,26 +55,92 @@ export default function SearchPage() {
             >
               Back
             </Button>
-            <Button variant="outline" onClick={() => navigate("/search")}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                // clear search params
+                navigate("/search");
+              }}
+            >
               Clear
             </Button>
           </div>
         </div>
-        {products.length === 0 ? (
+        {/* Optional: category list UI */}
+        {categories.length > 0 && (
+          <div className="mt-6">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="ghost" onClick={() => navigate("/search")}>
+                Tất cả
+              </Button>
+
+              {/*
+                Fix: categories may be objects { slug, name, url }.
+                Use c.slug as key and display c.name (fallback to slug).
+              */}
+              {categories.map((c) => {
+                // normalize different shapes: string slug or object
+                const slug =
+                  typeof c === "string"
+                    ? c
+                    : c.slug ?? c?.name ?? JSON.stringify(c);
+                const label = typeof c === "string" ? c : c.name ?? slug;
+                return (
+                  <Button
+                    key={slug}
+                    variant={slug === category ? "default" : "outline"}
+                    onClick={() => {
+                      // navigate with category slug
+                      navigate(`/search?category=${encodeURIComponent(slug)}`);
+                    }}
+                  >
+                    {label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="text-center py-12">Đang tải sản phẩm...</div>
+        ) : isError ? (
+          <div className="text-center py-12 text-destructive">
+            Lỗi khi tải: {error?.message ?? "Unknown error"}
+          </div>
+        ) : products.length === 0 ? (
           <div className="text-sm text-muted-foreground">
             Không tìm thấy sản phẩm phù hợp.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                role="buyer"
-                onAddToCart={(p) => console.log("Add to cart:", p)}
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  role="buyer"
+                  onAddToCart={(p) => console.log("Add to cart:", p)}
+                />
+              ))}
+            </div>
+
+            <div className="mt-6">
+              <Pagination
+                page={page}
+                total={total}
+                pageSize={PAGE_SIZE}
+                onPageChange={(p) => {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  setPage(p);
+                }}
               />
-            ))}
-          </div>
+            </div>
+          </>
+        )}
+
+        {isFetching && !isLoading && (
+          <div className="text-sm text-muted-foreground">Đang cập nhật...</div>
         )}
       </div>
     </MainLayout>
