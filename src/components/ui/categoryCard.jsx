@@ -1,4 +1,5 @@
 import React from "react";
+import useImage from "@/hooks/useImage";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,6 +23,8 @@ export default function CategoryCard({ category = {}, onClick, className }) {
     }
   };
 
+  const { url } = useImage(150);
+
   return (
     <div
       role={onClick ? "button" : "group"}
@@ -35,7 +38,7 @@ export default function CategoryCard({ category = {}, onClick, className }) {
       )}
     >
       <img
-        src={category.url || "/placeholder-category.png"}
+        src={category.image || url}
         alt={category.name || "category image"}
         className="w-full h-36 object-cover"
       />

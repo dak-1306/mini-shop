@@ -52,7 +52,7 @@ export default function Cart() {
                   className="flex items-center gap-4 p-4 rounded-md border bg-card"
                 >
                   <img
-                    src={it.image || "/placeholder.png"}
+                    src={it.images?.[0] || "/placeholder.png"}
                     alt={it.name}
                     className="w-24 h-24 object-cover rounded"
                   />

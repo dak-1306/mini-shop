@@ -30,13 +30,18 @@ export default function ProductCard({
   const addItem = useCartStore((s) => s.addItem);
 
   const handleAddToCart = useCallback(
-    (p) => {
+    (p, e) => {
+      // ngăn navigation khi nút nằm trong Link
+      if (e && typeof e.preventDefault === "function") {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       if (!p.id) return;
       addItem({
         id: p.id,
-        name: p.name,
+        name: p.title,
         price: p.price,
-        image: p.image,
+        images: p.images,
         sku: p.sku,
         qty: 1,
       });
@@ -94,18 +99,24 @@ export default function ProductCard({
                 {role === "seller" ? (
                   <div className="flex gap-2">
                     <Button
+                      type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => onEdit?.(product)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEdit?.(product);
+                      }}
                     >
                       Edit
                     </Button>
                   </div>
                 ) : (
                   <Button
+                    type="button"
                     variant="default"
                     size="sm"
-                    onClick={() => handleAddToCart(product)}
+                    onClick={(e) => handleAddToCart(product, e)}
                     disabled={product.stock <= 0}
                   >
                     <ShoppingCart className="mr-2 h-4 w-4" />
