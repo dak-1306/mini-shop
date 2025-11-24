@@ -17,32 +17,35 @@ export async function getProducts({
   // Nếu có search -> sử dụng /search?q=
   if (search) {
     params.q = search;
-    const res = await api.get("/search", { params, signal });
+    const res = await api.get("/products/search", { params, signal });
     return res.data; // { products, total, skip, limit }
   }
 
   // Nếu có category -> gọi endpoint /category/{slug}
   if (category) {
-    const res = await api.get(`/category/${encodeURIComponent(category)}`, {
-      params,
-      signal,
-    });
+    const res = await api.get(
+      `/products/category/${encodeURIComponent(category)}`,
+      {
+        params,
+        signal,
+      }
+    );
     return res.data; // dummyjson trả về { products, total, skip, limit }
   }
 
   // Mặc định lấy tất cả
-  const res = await api.get("/", { params, signal });
+  const res = await api.get("/products", { params, signal });
   return res.data;
 }
 
 export async function getProduct(id, signal) {
   if (id == null || id === "") throw new Error("Product id is required");
-  const res = await api.get(`/${encodeURIComponent(id)}`, { signal });
+  const res = await api.get(`/products/${encodeURIComponent(id)}`, { signal });
   return res.data;
 }
 
 export async function getCategories(signal) {
-  const res = await api.get("/categories", { signal });
+  const res = await api.get("/products/categories", { signal });
   return res.data; // mảng slug/name nếu dùng endpoint khác; dummyjson trả mảng slug strings
 }
 
