@@ -1,9 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import MainLayout from "../../components/layout/MainLayout";
+import MainLayout from "@/components/layout/MainLayout.jsx";
 import { Button } from "@/components/ui/button";
 import { Trash2, Minus, Plus, CreditCard } from "lucide-react";
-import { useCartStore } from "../../store/cartStore";
+import { useCartStore } from "@/store/cartStore.js";
 import { formatCurrency } from "@/utils/price";
 
 export default function Cart() {

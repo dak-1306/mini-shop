@@ -283,6 +283,30 @@ app.get("/api/users/:id", async (req, res) => {
   }
 });
 
+app.get("/api/carts/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // optional: require auth cookie (access token) — remove this check if you don't want protection here
+    if (!req.cookies?.[ACCESS_COOKIE]) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const query = new URLSearchParams(req.query).toString();
+    const url = `${API_BASE}/carts/${encodeURIComponent(id)}${
+      query ? "?" + query : ""
+    }`;
+
+    const response = await axios.get(url, { timeout: 8000 });
+    return res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error("carts relay error", err?.message || err);
+    if (err.response)
+      return res.status(err.response.status).json(err.response.data);
+    return res.status(502).json({ error: "Bad gateway" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log("Relay server running on port", PORT);
 });

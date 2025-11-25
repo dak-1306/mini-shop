@@ -76,6 +76,77 @@ const useCartStore = create(
 
       // replace items (useful for hydrate/testing)
       setItems: (items = []) => set({ items }),
+
+      /**
+       * Map server cart -> store items
+       * serverCart expected shape (dummyjson): { id, products: [{ id, title, price, quantity, ... }], ... }
+       */
+      setItemsFromServer: (serverCart = {}) => {
+        const products = Array.isArray(serverCart.products)
+          ? serverCart.products
+          : [];
+        const mapped = products.map((p) => ({
+          id: p.id,
+          name: p.title ?? p.name ?? p.productName ?? "",
+          price: p.price ?? p.unitPrice ?? 0,
+          image:
+            p.thumbnail ?? (Array.isArray(p.images) ? p.images[0] : undefined),
+          sku: p.sku ?? undefined,
+          qty: p.quantity ?? p.qty ?? 1,
+          // keep raw server product for reference if needed
+          _raw: p,
+        }));
+        set({ items: mapped });
+      },
+
+      /**
+       * Merge local cart with server cart.
+       * Strategy: sum quantities for same product id; keep unique items.
+       * You can change strategy to max(local,server) if desired.
+       */
+      mergeWithServer: (serverCart = {}) => {
+        const products = Array.isArray(serverCart.products)
+          ? serverCart.products
+          : [];
+        const serverItems = products.map((p) => ({
+          id: p.id,
+          name: p.title ?? p.name ?? "",
+          price: p.price ?? 0,
+          image: p.thumbnail ?? undefined,
+          qty: p.quantity ?? p.qty ?? 1,
+        }));
+        const local = get().items;
+
+        const map = new Map();
+        // add server items
+        serverItems.forEach((it) => {
+          map.set(String(it.id), { ...it });
+        });
+        // merge local (sum qty)
+        local.forEach((it) => {
+          const key = String(it.id);
+          if (map.has(key)) {
+            const exist = map.get(key);
+            map.set(key, { ...exist, qty: (exist.qty || 0) + (it.qty || 0) });
+          } else {
+            map.set(key, { ...it });
+          }
+        });
+
+        set({ items: Array.from(map.values()) });
+      },
+
+      /**
+       * Convert store items -> server minimal payload
+       * Example server format: { userId, products: [{ id, quantity }, ...] }
+       */
+      toServerPayload: (userId) => {
+        const products = get().items.map((it) => ({
+          id: it.id,
+          quantity: it.qty || 1,
+        }));
+        return { userId, products };
+      },
     }),
     {
       name: "cart-storage", // localStorage key

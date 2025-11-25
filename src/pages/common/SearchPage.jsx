@@ -1,7 +1,7 @@
 import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import MainLayout from "../../components/layout/MainLayout";
-import ProductCard from "../../components/common/ProductCard";
+import MainLayout from "@/components/layout/MainLayout";
+import ProductCard from "@/components/common/ProductCard";
 import { Button } from "@/components/ui/button";
 import Pagination from "@/components/ui/pagination";
 import { useProducts, useCategories } from "@/hooks/useProducts";

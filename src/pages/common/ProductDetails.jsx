@@ -1,11 +1,11 @@
 import React from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import MainLayout from "../../components/layout/MainLayout";
+import MainLayout from "@/components/layout/MainLayout";
 import { useCartStore } from "@/store/cartStore";
 import { formatCurrency } from "@/utils/price";
 import { ShoppingCart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useProduct } from "../../hooks/useProducts";
+import { useProduct } from "@/hooks/useProducts";
 import { useAuthStore } from "@/store/authStore";
 
 /**

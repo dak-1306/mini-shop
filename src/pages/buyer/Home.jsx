@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import MainLayout from "../../components/layout/MainLayout";
-import ProductCard from "../../components/common/ProductCard";
-import CategorySection from "../../components/common/CategorySection";
-import { useProducts, useCategories } from "../../hooks/useProducts";
-import Pagination from "../../components/ui/pagination";
+import MainLayout from "@/components/layout/MainLayout.jsx";
+import ProductCard from "@/components/common/ProductCard.jsx";
+import CategorySection from "@/components/common/CategorySection.jsx";
+import { useProducts, useCategories } from "@/hooks/useProducts.js";
+import Pagination from "@/components/ui/pagination.jsx";
 
 export default function Home() {
   const PAGE_SIZE = 20;
