@@ -1,11 +1,12 @@
 import React from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import MainLayout from "../../components/layout/MainLayout";
 import { useCartStore } from "@/store/cartStore";
 import { formatCurrency } from "@/utils/price";
 import { ShoppingCart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProduct } from "../../hooks/useProducts";
+import { useAuthStore } from "@/store/authStore";
 
 /**
  * ProductDetails - hiển thị thông tin chi tiết sản phẩm (dựa trên response dummyjson)
@@ -15,6 +16,10 @@ import { useProduct } from "../../hooks/useProducts";
 export default function ProductDetails() {
   const { id } = useParams();
   const productId = id ? decodeURIComponent(id) : null;
+
+  const authUser = useAuthStore((s) => s.user);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { data: product, isLoading, isError, error } = useProduct(productId);
   const addItem = useCartStore((s) => s.addItem);
@@ -82,6 +87,11 @@ export default function ProductDetails() {
   const meta = product.meta ?? {};
 
   function handleAddToCart() {
+    if (!authUser) {
+      // redirect to login and return to current page after success
+      navigate("/login", { state: { from: location }, replace: true });
+      return;
+    }
     addItem(
       {
         id: product.id,

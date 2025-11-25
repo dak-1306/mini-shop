@@ -1,6 +1,7 @@
 import React from "react";
 import LayoutAuth from "@/components/layout/LayoutAuth";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { HomeIcon } from "lucide-react";
 import GenericForm from "@/components/ui/form";
 // import useAuthStore from "@/store/authStore";
 
@@ -49,6 +50,17 @@ export default function Register() {
         // onSubmit={handleSubmit}
         submitLabel="Đăng ký"
       />
+      <div className="mt-4 text-center text-sm text-muted-foreground">
+        <p>
+          Đã có tài khoản?{" "}
+          <Link to="/login" className="hover:underline">
+            Đăng nhập
+          </Link>
+        </p>
+        <Link to="/" className="inline-flex items-center gap-1 hover:underline">
+          <HomeIcon className="w-4 h-4" /> Trang chủ
+        </Link>
+      </div>
     </LayoutAuth>
   );
 }

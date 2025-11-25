@@ -9,12 +9,14 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/authStore";
 
 import { Search, ShoppingCart, UserRound } from "lucide-react";
 
 function Header() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const authUser = useAuthStore((s) => s.user);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -46,7 +48,7 @@ function Header() {
           <TooltipTrigger asChild>
             <Button
               type="submit"
-              style={{ background: "#00A86B" }}
+              variant="secondary"
               className="ml-2 px-4 py-2 text-white rounded-md"
               aria-label="Search"
             >
@@ -60,34 +62,51 @@ function Header() {
       <nav className="flex items-center space-x-6">
         <ul className="flex space-x-4">
           <li>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/profile"
-                  className="hover:underline"
-                  aria-label="User Profile"
-                >
-                  <UserRound className="w-5 h-5" />
+            {!authUser ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="px-4 py-2 text-white rounded-md"
+              >
+                <Link to="/login" className="hover:underline">
+                  Login
                 </Link>
-              </TooltipTrigger>
-              <TooltipContent>User Profile</TooltipContent>
-            </Tooltip>
+              </Button>
+            ) : null}
           </li>
+          {authUser ? (
+            <>
+              <li>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to="/profile"
+                      className="hover:underline"
+                      aria-label="User Profile"
+                    >
+                      <UserRound className="w-5 h-5" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>User Profile</TooltipContent>
+                </Tooltip>
+              </li>
 
-          <li>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/cart"
-                  className="hover:underline"
-                  aria-label="Shopping Cart"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>Shopping Cart</TooltipContent>
-            </Tooltip>
-          </li>
+              <li>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to="/cart"
+                      className="hover:underline"
+                      aria-label="Shopping Cart"
+                    >
+                      <ShoppingCart className="w-5 h-5" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>Shopping Cart</TooltipContent>
+                </Tooltip>
+              </li>
+            </>
+          ) : null}
         </ul>
       </nav>
     </header>

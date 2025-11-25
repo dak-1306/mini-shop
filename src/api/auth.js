@@ -21,9 +21,29 @@ export async function login(
     }
   );
 
+  // defensive: ensure no refreshToken stored on client
+  try {
+    localStorage.removeItem("refreshToken");
+  } catch {}
+
+  return res.data;
+}
+
+// NEW: logout -> gọi relay server để clear httpOnly cookies / revoke nếu server làm
+export async function logout() {
+  // let caller handle network errors; only ensure client-side cleanup
+  const res = await api.post("/auth/logout");
+
+  // defensive cleanup on client
+  try {
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("app-auth");
+  } catch {}
+
   return res.data;
 }
 
 export default {
   login,
+  logout,
 };

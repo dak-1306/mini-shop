@@ -13,9 +13,13 @@ import { useCartStore } from "../../store/cartStore";
 
 import { ShoppingCart } from "lucide-react";
 
-import { Link, generatePath } from "react-router-dom";
+import { Link, generatePath, useNavigate, useLocation } from "react-router-dom";
+
+import placeholder from "@/assets/placeholder-product.svg";
 
 import formatCurrency from "@/utils/price";
+
+import { useAuthStore } from "@/store/authStore";
 
 export default function ProductCard({
   product,
@@ -27,16 +31,29 @@ export default function ProductCard({
 }) {
   if (!product) return null;
 
+  const src = product?.thumbnail ?? placeholder;
+
   const addItem = useCartStore((s) => s.addItem);
+  const user = useAuthStore((s) => s.user);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleAddToCart = useCallback(
     (p, e) => {
-      // ngăn navigation khi nút nằm trong Link
+      // nếu nút nằm trong Link, ngăn navigation mặc định
       if (e && typeof e.preventDefault === "function") {
         e.preventDefault();
         e.stopPropagation();
       }
-      if (!p.id) return;
+
+      if (!user) {
+        // redirect to login and return to current page after success
+        navigate("/login", { state: { from: location }, replace: true });
+        return;
+      }
+
+      if (!p?.id) return;
+
       addItem({
         id: p.id,
         name: p.title,
@@ -47,7 +64,7 @@ export default function ProductCard({
       });
       onAddToCart?.(p);
     },
-    [addItem, onAddToCart]
+    [addItem, onAddToCart, navigate, user, location]
   );
 
   const productLink = generatePath("/product/:id", {
@@ -63,7 +80,7 @@ export default function ProductCard({
         {/* make content full width and align start so title/description can use full width */}
         <div className="flex flex-col items-start gap-4 w-full p-4">
           <img
-            src={product.thumbnail}
+            src={src}
             alt={product.title}
             className="w-48 h-48 object-cover rounded flex-shrink-0"
           />

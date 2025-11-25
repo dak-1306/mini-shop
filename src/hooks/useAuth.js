@@ -1,6 +1,6 @@
 import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { login as apiLogin } from "@/api/auth";
+import { login as apiLogin, logout as apiLogout } from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
 
 export default function useAuth() {
@@ -37,11 +37,20 @@ export default function useAuth() {
     (variables) => mutation.mutate(variables),
     [mutation]
   );
-  const logout = React.useCallback(() => {
-    clearUser();
+
+  // make logout async and call server to clear cookies
+  const logout = React.useCallback(async () => {
     try {
-      qc.invalidateQueries({ queryKey: ["me"] });
-    } catch {}
+      await apiLogout();
+    } catch (err) {
+      // ignore network errors but proceed to clear client state
+      console.warn("logout api error", err);
+    } finally {
+      clearUser();
+      try {
+        qc.invalidateQueries({ queryKey: ["me"] });
+      } catch {}
+    }
   }, [clearUser, qc]);
 
   return { auth, login, logout, mutation };

@@ -1,11 +1,13 @@
 import React from "react";
 import LayoutAuth from "@/components/layout/LayoutAuth";
-import { useNavigate } from "react-router-dom";
+import { HomeIcon } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import GenericForm from "@/components/ui/form";
 import useAuth from "@/hooks/useAuth";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, mutation } = useAuth();
 
   const fields = [
@@ -25,6 +27,16 @@ export default function Login() {
     },
   ];
 
+  // trang đến trước đó (fallback "/")
+  const from = location.state?.from?.pathname || "/";
+
+  // redirect khi login thành công
+  React.useEffect(() => {
+    if (mutation.isSuccess) {
+      navigate(from, { replace: true });
+    }
+  }, [mutation.isSuccess, from, navigate]);
+
   // gọi login mutation
   const handleSubmit = (values) => {
     login({
@@ -34,27 +46,29 @@ export default function Login() {
     });
   };
 
-  // redirect khi login thành công
-  React.useEffect(() => {
-    if (mutation.isSuccess) {
-      navigate("/", { replace: true });
-    }
-  }, [mutation.isSuccess, navigate]);
-
   return (
     <LayoutAuth title="Đăng nhập">
-      <div className="bg-white p-6 rounded-md shadow-md">
-        <GenericForm
-          fields={fields}
-          onSubmit={handleSubmit}
-          submitLabel={mutation.isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
-        />
+      <GenericForm
+        fields={fields}
+        onSubmit={handleSubmit}
+        submitLabel={mutation.isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+      />
 
-        {mutation.isError && (
-          <div className="mt-3 text-sm text-destructive">
-            {mutation.error?.message ?? "Đăng nhập thất bại"}
-          </div>
-        )}
+      {mutation.isError && (
+        <div className="mt-3 text-sm text-destructive">
+          {mutation.error?.message ?? "Đăng nhập thất bại"}
+        </div>
+      )}
+      <div className="mt-4 text-center text-sm text-muted-foreground">
+        <p>
+          Bạn chưa có tài khoản?{" "}
+          <Link to="/register" className="text-primary hover:underline">
+            Đăng ký
+          </Link>
+        </p>
+        <Link to="/" className="inline-flex items-center gap-1 hover:underline">
+          <HomeIcon className="w-4 h-4" /> Trang chủ
+        </Link>
       </div>
     </LayoutAuth>
   );

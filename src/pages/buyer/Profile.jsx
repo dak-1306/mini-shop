@@ -1,17 +1,9 @@
 import React from "react";
 import MainLayout from "../../components/layout/MainLayout";
-import { mockUsers, getUserById } from "@/data/mockData";
+import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/price";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  LogOut,
-  Edit3,
-  CreditCard,
-  ShoppingBag,
-} from "lucide-react";
-import { useParams, Link } from "react-router-dom";
+import { Mail, Phone, MapPin, LogOut, Edit3, CreditCard } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -20,26 +12,66 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-export default function Profile() {
-  // nếu route /profile/:id thì useParams, nếu không có thì lấy user đầu tiên
-  const { id } = useParams?.() ?? {};
-  const user = React.useMemo(() => getUserById(id) || mockUsers[0], [id]);
+import useProfile from "@/hooks/useProfile";
+import { useAuthStore } from "@/store/authStore";
+import useAuth from "@/hooks/useAuth"; // <-- added
 
-  if (!user) {
+export default function Profile() {
+  const navigate = useNavigate();
+  const authUser = useAuthStore((s) => s.user);
+  const { logout } = useAuth(); // <-- added
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false); // <-- added
+
+  // redirect to login when no authenticated user in store
+  React.useEffect(() => {
+    if (!authUser) {
+      navigate("/login", { replace: true });
+    }
+  }, [authUser, navigate]);
+
+  // useProfile will use authStore.user.id if no idProp passed
+  const { data, isLoading, isError } = useProfile();
+
+  // prefer fetched data, fallback to authStore user
+  const fetched = data ?? null;
+  const user = (fetched && (fetched.user ?? fetched)) || authUser;
+
+  // logout handler
+  const handleLogout = React.useCallback(async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      // after logout, redirect to home or login
+      navigate("/login", { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [logout, navigate]);
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="max-w-4xl mx-auto p-6">
+          Đang tải thông tin người dùng...
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (isError || !user) {
     return (
       <MainLayout>
         <div className="max-w-4xl mx-auto p-6">
           <div className="text-center text-muted-foreground">
-            User not found
+            Không thể tải profile
           </div>
         </div>
       </MainLayout>
     );
   }
 
-  // thêm helper lấy initials gần đầu component
   const getInitials = (name = "") =>
-    name
+    String(name)
       .split(" ")
       .map((s) => s[0] || "")
       .filter(Boolean)
@@ -52,37 +84,50 @@ export default function Profile() {
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* header */}
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-          {/* Thay thế <img src={user.avatar} ... /> bằng Avatar component */}
           <Avatar className="w-28 h-28">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+            <AvatarImage
+              src={user.image ?? user.avatar}
+              alt={user.name ?? user.username}
+            />
+            <AvatarFallback>
+              {getInitials(
+                user.name ?? `${user.firstName ?? ""} ${user.lastName ?? ""}`
+              )}
+            </AvatarFallback>
           </Avatar>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-semibold truncate">{user.name}</h1>
+                <h1 className="text-2xl font-semibold truncate">
+                  {user.name ??
+                    `${user.firstName ?? ""} ${user.lastName ?? ""}`}
+                </h1>
                 <div className="text-sm text-muted-foreground">
-                  @{user.username} • {user.role}
+                  @{user.username ?? user.email} • {user.role ?? "customer"}
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md border hover:bg-muted-foreground/5"
+                  variant="outline"
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md"
                 >
                   <Edit3 className="w-4 h-4" />
                   Edit
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-destructive text-white"
+                  variant="destructive"
+                  onClick={handleLogout} // <-- wired logout
+                  disabled={isLoggingOut} // <-- disable while logging out
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md"
                 >
                   <LogOut className="w-4 h-4" />
-                  Logout
-                </button>
+                  {isLoggingOut ? "Đang đăng xuất..." : "Logout"}
+                </Button>
               </div>
             </div>
 
@@ -105,7 +150,8 @@ export default function Profile() {
                 <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-card">
                   <MapPin className="w-4 h-4" />
                   <span className="truncate">
-                    {user.address.line1}, {user.address.city}
+                    {user.address.line1 ?? user.address?.address},{" "}
+                    {user.address.city}
                   </span>
                 </div>
               )}
@@ -124,12 +170,6 @@ export default function Profile() {
                     <h2 id="orders-title" className="text-lg font-medium">
                       Đơn hàng gần đây
                     </h2>
-                    <Link
-                      to="/orders"
-                      className="text-sm text-muted-foreground hover:underline"
-                    >
-                      Xem tất cả
-                    </Link>
                   </div>
                 </CardHeader>
 
@@ -147,7 +187,7 @@ export default function Profile() {
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {o.items
-                                .map((it) => `${it.name} x${it.qty}`)
+                                ?.map((it) => `${it.name} x${it.qty}`)
                                 .join(", ")}
                             </div>
                             <div className="mt-2 text-sm">
@@ -180,12 +220,6 @@ export default function Profile() {
                     <h2 id="favorites-title" className="text-lg font-medium">
                       Yêu thích
                     </h2>
-                    <Link
-                      to="/wishlist"
-                      className="text-sm text-muted-foreground hover:underline"
-                    >
-                      Quản lý
-                    </Link>
                   </div>
                 </CardHeader>
 
@@ -290,15 +324,15 @@ export default function Profile() {
 
               <CardFooter className="p-4">
                 <div className="flex flex-col gap-2">
-                  <Link
-                    to="/payment-methods"
+                  <a
+                    href="/payment-methods"
                     className="text-sm hover:underline"
                   >
                     Quản lý phương thức thanh toán
-                  </Link>
-                  <Link to="/orders" className="text-sm hover:underline">
+                  </a>
+                  <a href="/orders" className="text-sm hover:underline">
                     Xem lịch sử đơn
-                  </Link>
+                  </a>
                 </div>
               </CardFooter>
             </Card>
