@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Minus, Plus, CreditCard } from "lucide-react";
 import { useCartStore } from "@/store/cartStore.js";
 import { formatCurrency } from "@/utils/price";
+import ClickableCard from "@/components/ui/ClickableCard.jsx";
 
 export default function Cart() {
   const items = useCartStore((s) => s.items);
@@ -47,79 +48,88 @@ export default function Cart() {
             {/* items list */}
             <div className="lg:col-span-2 space-y-4">
               {items.map((it) => (
-                <div
-                  key={it.id}
-                  className="flex items-center gap-4 p-4 rounded-md border bg-card"
+                <ClickableCard
+                  to={`/product/${encodeURIComponent(it.id)}`}
+                  ariaLabel={`View details for ${it.name}`}
                 >
-                  <img
-                    src={it.images?.[0] || "/placeholder.png"}
-                    alt={it.name}
-                    className="w-24 h-24 object-cover rounded"
-                  />
+                  <div
+                    key={it.id}
+                    className="flex items-center gap-4 p-4 rounded-md border bg-card"
+                  >
+                    <img
+                      src={it.images?.[0] || "/placeholder.png"}
+                      alt={it.name}
+                      className="w-24 h-24 object-cover rounded"
+                    />
 
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium truncate">{it.name}</h3>
-                    {it.sku && (
-                      <p className="text-sm text-muted-foreground">
-                        SKU: {it.sku}
-                      </p>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium truncate">{it.name}</h3>
+                      {it.sku && (
+                        <p className="text-sm text-muted-foreground">
+                          SKU: {it.sku}
+                        </p>
+                      )}
 
-                    <div className="mt-3 flex items-center gap-3">
-                      <div className="flex items-center border rounded-md overflow-hidden">
-                        <button
-                          aria-label="Giảm"
-                          onClick={() => decrease(it.id, 1)}
-                          className="px-3 py-1 hover:bg-muted-foreground/10"
+                      <div className="mt-3 flex items-center gap-3">
+                        <div className="flex items-center border rounded-md overflow-hidden">
+                          <button
+                            aria-label="Giảm"
+                            onClick={() => decrease(it.id, 1)}
+                            className="px-3 py-1 hover:bg-muted-foreground/10"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+
+                          <input
+                            aria-label="Số lượng"
+                            value={it.qty}
+                            onChange={(e) =>
+                              updateItemQuantity(
+                                it.id,
+                                Math.max(1, Number(e.target.value || 0))
+                              )
+                            }
+                            className="w-12 text-center bg-transparent outline-none"
+                          />
+
+                          <button
+                            aria-label="Tăng"
+                            onClick={() => increase(it.id, 1)}
+                            className="px-3 py-1 hover:bg-muted-foreground/10"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(it.id)}
+                          className="text-destructive"
+                          aria-label={`Xóa ${it.name}`}
                         >
-                          <Minus className="w-4 h-4" />
-                        </button>
-
-                        <input
-                          aria-label="Số lượng"
-                          value={it.qty}
-                          onChange={(e) =>
-                            updateItemQuantity(
-                              it.id,
-                              Math.max(1, Number(e.target.value || 0))
-                            )
-                          }
-                          className="w-12 text-center bg-transparent outline-none"
-                        />
-
-                        <button
-                          aria-label="Tăng"
-                          onClick={() => increase(it.id, 1)}
-                          className="px-3 py-1 hover:bg-muted-foreground/10"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                          <Trash2 className="w-4 h-4" />
+                          Xóa
+                        </Button>
                       </div>
+                    </div>
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(it.id)}
-                        className="text-destructive"
-                        aria-label={`Xóa ${it.name}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Xóa
-                      </Button>
+                    <div className="text-right min-w-[120px]">
+                      <div className="text-sm text-muted-foreground">
+                        Đơn giá
+                      </div>
+                      <div className="font-medium">
+                        {formatCurrency(it.price)}
+                      </div>
+                      <div className="text-muted-foreground text-sm mt-1">
+                        Tổng:{" "}
+                        {formatCurrency(
+                          (Number(it.price) || 0) * (it.qty || 0)
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  <div className="text-right min-w-[120px]">
-                    <div className="text-sm text-muted-foreground">Đơn giá</div>
-                    <div className="font-medium">
-                      {formatCurrency(it.price)}
-                    </div>
-                    <div className="text-muted-foreground text-sm mt-1">
-                      Tổng:{" "}
-                      {formatCurrency((Number(it.price) || 0) * (it.qty || 0))}
-                    </div>
-                  </div>
-                </div>
+                </ClickableCard>
               ))}
             </div>
 

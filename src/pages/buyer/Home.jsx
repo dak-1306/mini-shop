@@ -22,6 +22,7 @@ export default function Home() {
 
   // API dummyjson trả về object { products: [...], total, skip, limit }
   const products = data?.products ?? [];
+  const featuredCategories = categories.slice(0, 6); // lấy 6 category đầu làm nổi bật
   const total = data?.total ?? 0;
   console.log("Products:", products);
 
@@ -35,7 +36,7 @@ export default function Home() {
   return (
     <MainLayout>
       <CategorySection
-        categories={categories}
+        categories={featuredCategories}
         onSelect={handleCategorySelect}
         title="Danh mục nổi bật"
       />

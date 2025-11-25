@@ -3,10 +3,11 @@ import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import { useCartStore } from "@/store/cartStore";
 import { formatCurrency } from "@/utils/price";
-import { ShoppingCart, Star } from "lucide-react";
+import { ShoppingCart, Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProduct } from "@/hooks/useProducts";
 import { useAuthStore } from "@/store/authStore";
+import { useFavoriteStore } from "@/store/favoriteStore";
 
 /**
  * ProductDetails - hiển thị thông tin chi tiết sản phẩm (dựa trên response dummyjson)
@@ -22,9 +23,27 @@ export default function ProductDetails() {
   const location = useLocation();
 
   const { data: product, isLoading, isError, error } = useProduct(productId);
+
   const addItem = useCartStore((s) => s.addItem);
 
   const [qty, setQty] = React.useState(1);
+
+  // favorite
+  const isFavorite = useFavoriteStore((s) =>
+    productId ? s.isFavorite(productId) : false
+  );
+  const toggleFavorite = useFavoriteStore((s) => s.toggleFavorite);
+
+  function handleToggleFavorite() {
+    if (!authUser) {
+      // redirect to login and return to current page after success
+      navigate("/login", { state: { from: location }, replace: true });
+      return;
+    }
+    if (product) {
+      toggleFavorite(product);
+    }
+  }
 
   React.useEffect(() => {
     setQty(1);
@@ -72,8 +91,7 @@ export default function ProductDetails() {
 
   // Map fields from dummyjson shape
   const title = product.title ?? product.name;
-  const images =
-    product.images ?? (product.thumbnail ? [product.thumbnail] : []);
+  const images = product.images;
   const mainImage = images[0] ?? product.thumbnail ?? product.image;
   const price = product.price ?? 0;
   const sku = product.sku ?? "N/A";
@@ -108,112 +126,144 @@ export default function ProductDetails() {
     <MainLayout>
       <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Images */}
-        <div className="col-span-1 space-y-4">
-          <div className="w-full rounded overflow-hidden bg-white shadow">
-            <img
-              src={mainImage}
-              alt={title}
-              className="w-full h-auto object-cover"
-            />
+        <section>
+          <div className="col-span-1 space-y-4">
+            <div className="w-full rounded overflow-hidden bg-white shadow">
+              <img
+                src={mainImage}
+                alt={title}
+                className="w-full h-auto object-cover"
+              />
+            </div>
+
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {images.map((src, i) => (
+                  <Button
+                    key={src ?? i}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // swap main image by reordering images array (simple local state)
+                      const el = e.currentTarget;
+                      const parent = el.closest(".max-w-6xl");
+                      // quick approach: set src to main image via React state would be cleaner;
+                      // keep simple: replace mainImage by forcing re-render through state below
+                    }}
+                    className="w-full h-20 overflow-hidden rounded border"
+                  >
+                    <img
+                      src={src}
+                      alt={`${title} ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {images.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
-              {images.map((src, i) => (
-                <button
-                  key={src ?? i}
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // swap main image by reordering images array (simple local state)
-                    const el = e.currentTarget;
-                    const parent = el.closest(".max-w-6xl");
-                    // quick approach: set src to main image via React state would be cleaner;
-                    // keep simple: replace mainImage by forcing re-render through state below
-                  }}
-                  className="w-full h-20 overflow-hidden rounded border"
-                >
-                  <img
-                    src={src}
-                    alt={`${title} ${i + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+          {/* my favourite and back to home */}
+          <div className="mt-4 flex items-center justify-between">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={handleToggleFavorite}
+              aria-pressed={isFavorite}
+              aria-label={
+                isFavorite ? "Remove from favorites" : "Add to favorites"
+              }
+            >
+              <Heart
+                className={
+                  isFavorite
+                    ? "text-red-500 w-4 h-4"
+                    : "text-muted-foreground w-4 h-4"
+                }
+              />
+            </Button>
+            <p className="text-sm">
+              <Link to="/" className="text-sm hover:underline">
+                Quay về trang chủ
+              </Link>
+            </p>
+          </div>
+        </section>
 
         {/* Info + actions */}
         <div className="col-span-1 md:col-span-2 space-y-4">
-          <div>
-            <h1 className="text-2xl font-semibold">{title}</h1>
-            <div className="flex items-center gap-3 mt-2">
-              {rating != null && (
-                <div className="flex items-center gap-1 text-sm text-yellow-500">
-                  <Star className="w-4 h-4" />{" "}
-                  <span className="font-medium">{rating.toFixed(1)}</span>
+          <section className="bg-white p-6 rounded shadow space-y-4">
+            <div>
+              <h1 className="text-2xl font-semibold">{title}</h1>
+              <div className="flex items-center gap-3 mt-2">
+                {rating != null && (
+                  <div className="flex items-center gap-1 text-sm text-yellow-500">
+                    <Star className="w-4 h-4" />{" "}
+                    <span className="font-medium">{rating.toFixed(1)}</span>
+                  </div>
+                )}
+                <div className="text-sm text-muted-foreground">SKU: {sku}</div>
+                <div className="text-sm text-muted-foreground">
+                  Brand: {brand}
                 </div>
-              )}
-              <div className="text-sm text-muted-foreground">SKU: {sku}</div>
-              <div className="text-sm text-muted-foreground">
-                Brand: {brand}
               </div>
             </div>
-          </div>
 
-          <div className="text-2xl font-bold">{formatCurrency(price)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(price)}</div>
 
-          <p className="text-sm text-muted-foreground">{product.description}</p>
+            <p className="text-sm text-muted-foreground">
+              {product.description}
+            </p>
 
-          <div className="flex items-center gap-4 mt-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm mb-1">Số lượng</label>
+            <div className="flex items-center gap-4 mt-4">
               <div className="flex items-center gap-2">
-                <button
+                <label className="text-sm mb-1">Số lượng</label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    className="px-3 py-1 border rounded"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    value={qty}
+                    onChange={(e) =>
+                      setQty(Math.max(1, Number(e.target.value || 1)))
+                    }
+                    className="w-16 text-center border rounded px-2 py-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQty((q) => q + 1)}
+                    className="px-3 py-1 border rounded"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
                   type="button"
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  className="px-3 py-1 border rounded"
+                  variant="default"
+                  onClick={handleAddToCart}
+                  disabled={stock === 0}
                 >
-                  -
-                </button>
-                <input
-                  type="number"
-                  min={1}
-                  value={qty}
-                  onChange={(e) =>
-                    setQty(Math.max(1, Number(e.target.value || 1)))
-                  }
-                  className="w-16 text-center border rounded px-2 py-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => setQty((q) => q + 1)}
-                  className="px-3 py-1 border rounded"
-                >
-                  +
-                </button>
+                  <ShoppingCart className="w-4 h-4 mr-2" /> Thêm vào giỏ
+                </Button>
+
+                <div className="text-sm text-muted-foreground">
+                  {availability}
+                  {stock != null && ` — ${stock} có sẵn`}
+                </div>
               </div>
             </div>
+          </section>
 
-            <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                variant="default"
-                onClick={handleAddToCart}
-                disabled={stock === 0}
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" /> Thêm vào giỏ
-              </Button>
-
-              <div className="text-sm text-muted-foreground">
-                {availability}
-                {stock != null && ` — ${stock} có sẵn`}
-              </div>
-            </div>
-          </div>
-
-          <section className="pt-4 border-t mt-4 pt-4">
+          <section className="p-6 bg-white rounded shadow">
             <h2 className="text-lg font-medium mb-2">Thông tin sản phẩm</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
               <div>Brand: {brand}</div>
@@ -243,7 +293,7 @@ export default function ProductDetails() {
             </div>
           </section>
 
-          <section className="pt-4 border-t mt-4 pt-4">
+          <section className="p-6 bg-white rounded shadow">
             <h2 className="text-lg font-medium mb-2">
               Đánh giá ({reviews.length})
             </h2>

@@ -2,7 +2,15 @@ import React from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/utils/price";
-import { Mail, Phone, MapPin, LogOut, Edit3, CreditCard } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  LogOut,
+  Edit3,
+  CreditCard,
+  Trash2,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -15,12 +23,19 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import useProfile from "@/hooks/useProfile";
 import { useAuthStore } from "@/store/authStore";
 import useAuth from "@/hooks/useAuth"; // <-- added
+import { useFavoriteStore } from "@/store/favoriteStore";
+import ClickableCard from "@/components/ui/ClickableCard";
 
 export default function Profile() {
   const navigate = useNavigate();
   const authUser = useAuthStore((s) => s.user);
   const { logout } = useAuth(); // <-- added
   const [isLoggingOut, setIsLoggingOut] = React.useState(false); // <-- added
+
+  // favorite
+  const favoriteItems = useFavoriteStore((s) => s.items);
+  const removeItem = useFavoriteStore((s) => s.removeFavorite);
+  console.log("Favorite items:", favoriteItems);
 
   // redirect to login when no authenticated user in store
   React.useEffect(() => {
@@ -224,15 +239,30 @@ export default function Profile() {
                 </CardHeader>
 
                 <CardContent>
-                  {user.favorites?.length ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {user.favorites.map((pid) => (
-                        <div
-                          key={pid}
-                          className="p-2 rounded-md border bg-white/5 text-sm text-center"
+                  {favoriteItems.length ? (
+                    <div className="flex flex-col space-y-4">
+                      {favoriteItems.map((item) => (
+                        <ClickableCard
+                          to={`/product/${encodeURIComponent(item.id)}`}
+                          ariaLabel={`View details for ${item.name}`}
+                          key={item.id}
+                          className="flex justify-between items-center gap-2"
                         >
-                          {pid}
-                        </div>
+                          <img
+                            className="w-20 h-20 object-cover rounded"
+                            src={item.image}
+                            alt={item.name}
+                          />
+                          <p>{item.name}</p>
+                          <Button
+                            variant="destructive"
+                            type="button"
+                            size="sm"
+                            onClick={() => removeItem(item.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </ClickableCard>
                       ))}
                     </div>
                   ) : (
