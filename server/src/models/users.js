@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
-const SALT_ROUNDS = Number(process.env.PASSWORD_SALT_ROUNDS) || 10;
+// thống nhất tên biến môi trường: BCRYPT_SALT_ROUNDS
+const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
 
 // Schema cho địa chỉ của user
 const AddressSchema = new mongoose.Schema(
@@ -37,10 +38,11 @@ const UserSchema = new mongoose.Schema(
     },
 
     // store hashed password only
+    // tăng minlength để khớp với kiểm tra ở controller (8)
     password: {
       type: String,
       required: true,
-      minlength: 6,
+      minlength: 8,
     },
 
     avatar: {
@@ -74,20 +76,20 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // thêm trường token xác thực email (nếu cần)
+    emailVerifyToken: { type: String, default: null },
+    emailVerifyExpires: { type: Date, default: null },
   },
   { timestamps: true }
 );
 
 // Hash password trước khi lưu nếu có thay đổi
-UserSchema.pre("save", async function (next) {
-  try {
-    if (!this.isModified("password")) return next();
-    const hash = await bcrypt.hash(this.password, SALT_ROUNDS);
-    this.password = hash;
-    return next();
-  } catch (err) {
-    return next(err);
-  }
+UserSchema.pre("save", async function () {
+  // nếu password không thay đổi thì không làm gì
+  if (!this.isModified("password")) return;
+  // hash và gán — nếu có lỗi sẽ bị reject và Mongoose xử lý
+  this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
 });
 
 // instance method: compare mật khẩu
