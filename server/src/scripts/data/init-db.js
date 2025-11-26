@@ -1,10 +1,10 @@
-import { connectDB, disconnectDB } from "../config/db.js";
-import Product from "../models/products.js";
-import User from "../models/users.js";
-import Cart from "../models/cart.js";
-import Wishlist from "../models/wishlists.js";
-import Review from "../models/reviews.js";
-import Order from "../models/orders.js";
+import { connectDB, disconnectDB } from "../../config/db.js";
+import Product from "../../models/products.js";
+import User from "../../models/users.js";
+import Cart from "../../models/cart.js";
+import Wishlist from "../../models/wishlists.js";
+import Review from "../../models/reviews.js";
+import Order from "../../models/orders.js";
 
 // script để khởi tạo cơ sở dữ liệu, tạo các chỉ mục cần thiết
 

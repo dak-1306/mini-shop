@@ -74,7 +74,32 @@ export const JWT_SECRET = process.env.JWT_SECRET || "";
 export const COOKIE_SECRET = process.env.COOKIE_SECRET || "";
 
 /*
-  Export default thuận tiện: gom các giá trị thường dùng vào 1 object
+  Token expiry config:
+  - ACCESS_TOKEN_EXPIRES: chuỗi hỗ trợ jwt.sign expiresIn (vd: "15m", "1h")
+  - REFRESH_TOKEN_EXPIRES_DAYS: số ngày refresh token có hiệu lực
+  - Đặt mặc định hợp lý nếu .env không cung cấp
+*/
+export const ACCESS_TOKEN_EXPIRES = process.env.ACCESS_TOKEN_EXPIRES || "15m";
+export const REFRESH_TOKEN_EXPIRES_DAYS = toNum(
+  process.env.REFRESH_TOKEN_EXPIRES_DAYS,
+  30
+);
+
+/*
+  Optional: thêm config liên quan login/lockout (sử dụng ở model/controller)
+*/
+export const BCRYPT_SALT_ROUNDS = toNum(process.env.BCRYPT_SALT_ROUNDS, 10);
+export const MAX_FAILED_LOGIN_ATTEMPTS = toNum(
+  process.env.MAX_FAILED_LOGIN_ATTEMPTS,
+  5
+);
+export const ACCOUNT_LOCK_TIME_MS = toNum(
+  process.env.ACCOUNT_LOCK_TIME_MS,
+  30 * 60 * 1000
+);
+
+/*
+  Default export cập nhật để tiện import nếu cần
 */
 export default {
   NODE_ENV,
@@ -87,4 +112,9 @@ export default {
   MONGO_OPTIONS,
   JWT_SECRET,
   COOKIE_SECRET,
+  ACCESS_TOKEN_EXPIRES,
+  REFRESH_TOKEN_EXPIRES_DAYS,
+  BCRYPT_SALT_ROUNDS,
+  MAX_FAILED_LOGIN_ATTEMPTS,
+  ACCOUNT_LOCK_TIME_MS,
 };

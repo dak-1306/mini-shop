@@ -1,6 +1,6 @@
-import { connectDB, disconnectDB } from "../config/db.js";
-import Category from "../models/categories.js";
-import { THIRD_PARTY_API } from "../config/env.js";
+import { connectDB, disconnectDB } from "../../config/db.js";
+import Category from "../../models/categories.js";
+import { THIRD_PARTY_API } from "../../config/env.js";
 
 /**
  * Importer categories from THIRD_PARTY_API
