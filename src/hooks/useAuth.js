@@ -1,6 +1,10 @@
 import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { login as apiLogin, logout as apiLogout } from "@/api/auth";
+import {
+  login as apiLogin,
+  logout as apiLogout,
+  register as apiRegister,
+} from "@/api/auth";
 import { useAuthStore } from "@/store/authStore";
 
 export default function useAuth() {
@@ -9,24 +13,32 @@ export default function useAuth() {
   const clearUser = useAuthStore((s) => s.clearUser);
 
   const user = useAuthStore((s) => s.user);
-  const auth = { user }; // token removed
+  const auth = { user };
 
-  const mutation = useMutation({
+  // Login mutation
+  const loginMutation = useMutation({
     mutationFn: async (variables, { signal }) => {
       return apiLogin(variables, signal);
     },
     onSuccess(data) {
-      // parse user from body; do NOT store token (cookie is httpOnly)
-      const userFromBody =
-        data?.user ??
-        (() => {
-          const { token, accessToken, ...rest } = data || {};
-          return Object.keys(rest).length ? rest : null;
-        })();
+      if (data?.user) {
+        setUser(data.user);
+      }
+      try {
+        qc.invalidateQueries({ queryKey: ["me"] });
+      } catch {}
+    },
+  });
 
-      // persist only user in store (authStore will persist to localStorage)
-      setUser(userFromBody);
-
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: async (variables, { signal }) => {
+      return apiRegister(variables, signal);
+    },
+    onSuccess(data) {
+      if (data?.user) {
+        setUser(data.user); // Lưu user ngay sau khi đăng ký
+      }
       try {
         qc.invalidateQueries({ queryKey: ["me"] });
       } catch {}
@@ -34,17 +46,20 @@ export default function useAuth() {
   });
 
   const login = React.useCallback(
-    (variables) => mutation.mutate(variables),
-    [mutation]
+    (variables) => loginMutation.mutate(variables),
+    [loginMutation]
   );
 
-  // make logout async and call server to clear cookies
+  const register = React.useCallback(
+    (variables) => registerMutation.mutate(variables),
+    [registerMutation]
+  );
+
   const logout = React.useCallback(async () => {
     try {
       await apiLogout();
     } catch (err) {
-      // ignore network errors but proceed to clear client state
-      console.warn("logout api error", err);
+      console.warn("lỗi logout", err);
     } finally {
       clearUser();
       try {
@@ -53,5 +68,12 @@ export default function useAuth() {
     }
   }, [clearUser, qc]);
 
-  return { auth, login, logout, mutation };
+  return {
+    auth,
+    login,
+    logout,
+    register,
+    loginMutation,
+    registerMutation,
+  };
 }

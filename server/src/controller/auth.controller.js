@@ -63,98 +63,63 @@ function createRefreshToken() {
  */
 export async function login(req, res) {
   try {
-    const { email, password } = req.validatedBody || req.body;
-    if (!email || !password)
-      return res.status(400).json({ error: "email & password required" });
+    const { email, password, expiresInMins = 30 } = req.body;
 
-    const normalizedEmail = String(email).trim().toLowerCase();
-    const user = await User.findOne({ email: normalizedEmail }).exec();
-
-    // So sánh mật khẩu (nếu user tồn tại dùng comparePassword, nếu không dùng fake DUMMY_HASH)
-    let passwordMatches = false;
-    if (user) {
-      passwordMatches = await user.comparePassword(password);
-    } else {
-      await bcrypt.compare(password, DUMMY_HASH).catch(() => {});
-      passwordMatches = false;
+    // Tìm user và kiểm tra password
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+    }).exec();
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(401).json({ error: "Email hoặc mật khẩu không đúng" });
     }
 
-    if (!passwordMatches) {
-      if (user) {
-        await user
-          .incLoginAttempts()
-          .catch((e) => console.warn("incLoginAttempts failed", e));
-        console.warn(
-          `[auth] failed login for user=${user.email} attempts=${user.failedLoginAttempts}`
-        );
-        if (user.isAccountLocked()) {
-          console.warn(
-            `[auth] user locked: ${user.email} until=${user.lockUntil}`
-          );
-        }
-      } else {
-        console.warn(
-          `[auth] failed login attempt for non-existent email=${normalizedEmail}`
-        );
-      }
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
+    // Bỏ kiểm tra isVerified - cho phép đăng nhập trực tiếp
 
-    // NEW: Chặn login nếu email chưa được xác thực
-    // - Kiểm tra ngay sau khi mật khẩu khớp để tránh user enumeration qua timing.
-    if (user && !user.isVerified) {
-      // (Không tăng failed attempts ở đây vì mật khẩu đã đúng; chỉ chặn truy cập do chưa verify)
-      console.warn(`[auth] login blocked - email not verified: ${user.email}`);
-      return res
-        .status(403)
-        .json({ error: "Email chưa được xác thực. Vui lòng kiểm tra email." });
-    }
+    // Tạo access token
+    const tokenPayload = { userId: user._id, email: user.email };
+    const accessToken = signAccessToken(tokenPayload, expiresInMins);
 
-    // Nếu tài khoản bị khóa -> trả 423
-    if (user.isAccountLocked && user.isAccountLocked()) {
-      console.warn(`[auth] login attempt while locked for user=${user.email}`);
-      return res
-        .status(423)
-        .json({
-          error:
-            "Tài khoản đang tạm khóa do nhiều lần đăng nhập thất bại. Vui lòng thử lại sau.",
-        });
-    }
+    // Tạo và lưu refresh token
+    const refreshToken = crypto.randomBytes(64).toString("hex");
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+    const expireTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày
 
-    // Reset counters sau khi đăng nhập thành công
-    await user
-      .resetFailedLogins()
-      .catch((e) => console.warn("resetFailedLogins failed", e));
-
-    // Tạo access + refresh token, lưu hash refresh, set cookie...
-    const accessToken = signAccessToken(user);
-    const { plain: refreshPlain, hash: refreshHash } = createRefreshToken();
-    const refreshExpires = new Date(
-      Date.now() + REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000
-    );
-
-    // lưu hash và expiry vào user
-    user.refreshTokenHash = refreshHash;
-    user.refreshTokenExpires = refreshExpires;
+    user.refreshTokenHash = tokenHash;
+    user.refreshTokenExpires = expireTime;
+    user.lastLogin = new Date();
     await user.save();
 
-    // set httpOnly cookie cho refresh token
-    const cookieOptions = {
+    // Đặt cookie httpOnly
+    const isProduction = process.env.NODE_ENV === "production";
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: IS_PROD,
+      secure: isProduction,
       sameSite: "lax",
-      maxAge: REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/",
-    };
-    res.cookie("refreshToken", refreshPlain, cookieOptions);
+    });
 
-    // trả access token + user sanitized
-    return res
-      .status(200)
-      .json({ message: "Login success", accessToken, user: user.toJSON() });
+    // Trả về thông tin user
+    const userInfo = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isVerified: user.isVerified,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+    };
+
+    return res.status(200).json({
+      message: "Đăng nhập thành công",
+      accessToken,
+      user: userInfo,
+    });
   } catch (err) {
-    console.error("login error", err);
-    return res.status(500).json({ error: "Login failed" });
+    console.error("lỗi đăng nhập", err);
+    return res.status(500).json({ error: "Đăng nhập thất bại" });
   }
 }
 
@@ -173,53 +138,48 @@ export async function login(req, res) {
  */
 export async function verifyEmail(req, res) {
   try {
-    const { token, id } = req.validatedBody || req.body;
-    if (!token || !id)
-      return res.status(400).json({ error: "token và id là bắt buộc" });
+    const { token } = req.body;
 
-    const user = await User.findById(String(id)).exec();
+    if (!token) {
+      return res.status(400).json({ error: "Verification token is required" });
+    }
+
+    // Hash token để tìm user
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+      emailVerificationToken: tokenHash,
+      emailVerificationExpires: { $gt: new Date() },
+    }).exec();
+
     if (!user) {
-      // Trả 400 để rõ lỗi; nếu muốn ẩn existence, trả 200 generic
-      return res.status(400).json({ error: "Người dùng không tồn tại" });
-    }
-
-    if (user.isVerified) {
-      return res.status(200).json({ message: "Email đã được xác thực" });
-    }
-
-    if (!user.emailVerifyToken || !user.emailVerifyExpires) {
-      return res.status(400).json({
-        error: "Không có token xác thực hợp lệ. Vui lòng yêu cầu gửi lại.",
-      });
-    }
-
-    // hash token gửi lên và so sánh
-    const tokenHash = crypto
-      .createHash("sha256")
-      .update(String(token))
-      .digest("hex");
-    if (tokenHash !== user.emailVerifyToken) {
-      return res.status(400).json({ error: "Token không hợp lệ" });
-    }
-
-    // kiểm tra expiry
-    if (user.emailVerifyExpires.getTime() < Date.now()) {
       return res
         .status(400)
-        .json({ error: "Token đã hết hạn. Vui lòng yêu cầu gửi lại." });
+        .json({ error: "Invalid or expired verification token" });
     }
 
-    // hợp lệ -> xác thực tài khoản
+    // Mark user as verified và clear verification token
     user.isVerified = true;
-    user.emailVerifyToken = null;
-    user.emailVerifyExpires = null;
-    user.emailVerifySentAt = null;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
     await user.save();
 
-    return res.status(200).json({ message: "Xác thực email thành công" });
+    // Sanitize user data
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isVerified: user.isVerified,
+      createdAt: user.createdAt,
+    };
+
+    return res.status(200).json({
+      message: "Email verified successfully",
+      user: userResponse, // trả user object để frontend có thể update localStorage
+    });
   } catch (err) {
-    console.error("verifyEmail error", err);
-    return res.status(500).json({ error: "Xác thực thất bại" });
+    console.error("verify email error", err);
+    return res.status(500).json({ error: "Email verification failed" });
   }
 }
 
@@ -310,49 +270,98 @@ export async function resendVerify(req, res) {
  */
 export async function register(req, res) {
   try {
-    const { name, email, password } = req.validatedBody || req.body;
-    if (!name || !email || !password)
-      return res.status(400).json({ error: "name, email, password required" });
-    if (password.length < 8)
-      return res.status(400).json({ error: "password min 8 chars" });
+    const { name, email, password } = req.body;
 
-    const normalizedEmail = String(email).trim().toLowerCase();
+    // Kiểm tra user đã tồn tại
+    const existingUser = await User.findOne({ email }).exec();
+    if (existingUser) {
+      return res.status(409).json({ error: "Email đã được sử dụng" });
+    }
 
-    // check existing
-    const exists = await User.findOne({ email: normalizedEmail }).lean().exec();
-    if (exists)
-      return res.status(409).json({ error: "Email already registered" });
-
-    // NOTE: Bỏ việc hash password ở controller để tránh double-hash.
-    // Việc hash sẽ do UserSchema.pre('save') xử lý trong models/users.js
-    const user = await User.create({
-      name: String(name).trim(),
-      email: normalizedEmail,
-      password, // để plain — model sẽ hash trước khi lưu
-      isVerified: false,
+    // Tạo user mới - bỏ qua verification
+    const newUser = new User({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password, // sẽ được hash tự động
+      isVerified: true, // mặc định đã verified
     });
 
-    // create email verification token (store hashed token)
-    const token = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    // store on user (ensure fields exist in User model)
-    user.emailVerifyToken = tokenHash;
-    user.emailVerifyExpires = Date.now() + 24 * 60 * 60 * 1000; // 24h
-    await user.save();
+    await newUser.save();
 
-    // send verification email asynchronously (implement sendVerificationEmail)
-    sendVerificationEmail(user.email, { token, userId: user._id }).catch(
-      (err) => console.error("send email failed", err)
-    );
+    // Trả về thông tin user (đã làm sạch)
+    const userInfo = {
+      _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      isVerified: newUser.isVerified,
+      createdAt: newUser.createdAt,
+    };
 
-    return res
-      .status(201)
-      .json({ message: "Registered. Check your email to verify." });
+    return res.status(201).json({
+      message: "Đăng ký thành công",
+      user: userInfo,
+    });
   } catch (err) {
-    // handle duplicate key race (in case unique index triggered)
-    if (err?.code === 11000)
-      return res.status(409).json({ error: "Email already registered" });
-    console.error("register error", err);
-    return res.status(500).json({ error: "Registration failed" });
+    console.error("lỗi đăng ký", err);
+    if (err.code === 11000) {
+      return res.status(409).json({ error: "Email đã được sử dụng" });
+    }
+    return res.status(500).json({ error: "Đăng ký thất bại" });
+  }
+}
+
+// thêm hàm logout để xoá refresh token (cookie httpOnly) và revoke token trên DB
+export async function logout(req, res) {
+  try {
+    // lấy refresh token plain từ cookie (cookie parser được giả sử đã dùng ở app)
+    const refreshPlain = req.cookies?.refreshToken;
+    // luôn clear cookie ở client để đảm bảo logout bất kể token có khớp DB hay không
+    const cookieOptions = {
+      httpOnly: true,
+      secure: IS_PROD,
+      sameSite: "lax",
+      path: "/",
+    };
+
+    // nếu không có cookie -> vẫn trả 200 (không leak thông tin)
+    if (!refreshPlain) {
+      res.clearCookie("refreshToken", cookieOptions);
+      return res.status(200).json({ message: "Logged out" });
+    }
+
+    // hash token để tìm user tương ứng và revoke (xoá hash + expiry)
+    try {
+      const refreshHash = crypto
+        .createHash("sha256")
+        .update(String(refreshPlain))
+        .digest("hex");
+
+      const user = await User.findOne({ refreshTokenHash: refreshHash }).exec();
+      if (user) {
+        user.refreshTokenHash = null;
+        user.refreshTokenExpires = null;
+        await user
+          .save()
+          .catch((e) =>
+            console.warn("logout: failed to clear refresh token on user", e)
+          );
+      }
+    } catch (e) {
+      console.warn("logout: error while revoking refresh token", e);
+      // tiếp tục clear cookie và trả về 200
+    }
+
+    res.clearCookie("refreshToken", cookieOptions);
+    return res.status(200).json({ message: "Logged out" });
+  } catch (err) {
+    console.error("logout error", err);
+    // mặc định trả 200 để tránh leak thông tin và luôn clear cookie
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: IS_PROD,
+      sameSite: "lax",
+      path: "/",
+    });
+    return res.status(200).json({ message: "Logged out" });
   }
 }

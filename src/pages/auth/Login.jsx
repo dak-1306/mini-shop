@@ -8,15 +8,20 @@ import useAuth from "@/hooks/useAuth";
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, mutation } = useAuth();
+  const { login, loginMutation } = useAuth();
 
   const fields = [
     {
-      name: "username",
-      label: "Username",
-      placeholder: "Tên đăng nhập",
+      name: "email",
+      label: "Email",
+      type: "email",
+      placeholder: "Email",
       required: true,
       autoFocus: true,
+      validate: (v) => {
+        if (!v) return null;
+        return /\S+@\S+\.\S+/.test(v) ? null : "Email không hợp lệ";
+      },
     },
     {
       name: "password",
@@ -32,15 +37,15 @@ export default function Login() {
 
   // redirect khi login thành công
   React.useEffect(() => {
-    if (mutation.isSuccess) {
+    if (loginMutation.isSuccess) {
       navigate(from, { replace: true });
     }
-  }, [mutation.isSuccess, from, navigate]);
+  }, [loginMutation.isSuccess, from, navigate]);
 
   // gọi login mutation
   const handleSubmit = (values) => {
     login({
-      username: values.username,
+      email: values.email,
       password: values.password,
       expiresInMins: 30,
     });
@@ -51,12 +56,14 @@ export default function Login() {
       <GenericForm
         fields={fields}
         onSubmit={handleSubmit}
-        submitLabel={mutation.isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+        submitLabel={
+          loginMutation.isLoading ? "Đang đăng nhập..." : "Đăng nhập"
+        }
       />
 
-      {mutation.isError && (
+      {loginMutation.isError && (
         <div className="mt-3 text-sm text-destructive">
-          {mutation.error?.message ?? "Đăng nhập thất bại"}
+          {loginMutation.error?.message ?? "Đăng nhập thất bại"}
         </div>
       )}
       <div className="mt-4 text-center text-sm text-muted-foreground">
