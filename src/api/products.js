@@ -18,10 +18,10 @@ export async function getProducts({
   if (search) {
     params.q = search;
     const res = await api.get("/products/search", { params, signal });
-    return res.data; // { products, total, skip, limit }
+    return res.data;
   }
 
-  // Nếu có category -> gọi endpoint /category/{slug}
+  // Nếu có category slug -> gọi endpoint /products/category/:slug
   if (category) {
     const res = await api.get(
       `/products/category/${encodeURIComponent(category)}`,
@@ -30,7 +30,7 @@ export async function getProducts({
         signal,
       }
     );
-    return res.data; // dummyjson trả về { products, total, skip, limit }
+    return res.data;
   }
 
   // Mặc định lấy tất cả
@@ -44,9 +44,15 @@ export async function getProduct(id, signal) {
   return res.data;
 }
 
+/**
+ * Lấy danh sách categories từ /api/categories
+ */
 export async function getCategories(signal) {
-  const res = await api.get("/products/categories", { signal });
-  return res.data; // mảng slug/name nếu dùng endpoint khác; dummyjson trả mảng slug strings
+  const res = await api.get("/categories", { signal });
+  // backend category.controller trả { meta, items } -> return items array
+  if (res?.data?.items && Array.isArray(res.data.items)) return res.data.items;
+  if (Array.isArray(res.data)) return res.data;
+  return [];
 }
 
 export default {

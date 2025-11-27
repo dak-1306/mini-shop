@@ -30,7 +30,10 @@ export default function Home() {
   const navigate = useNavigate();
 
   function handleCategorySelect(cat) {
-    navigate(`/search?category=${encodeURIComponent(cat?.id ?? "")}`);
+    // sử dụng slug thay vì id để tương thích với backend
+    navigate(
+      `/search?category=${encodeURIComponent(cat?.slug ?? cat?.id ?? "")}`
+    );
   }
 
   return (

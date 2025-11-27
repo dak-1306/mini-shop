@@ -2,18 +2,19 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
-import compression from "compression";
-import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
-import authRoutes from "./routes/auth.routes.js";
 
-/*
-  Khởi tạo Express app và mount middleware + routes.
-  - app chỉ chịu trách nhiệm cấu hình middleware và routes.
-  - Việc start server (app.listen) nên nằm trong src/index.js hoặc file entry khác.
-*/
+// import routes
+import authRoutes from "./routes/auth.routes.js";
+import productRoutes from "./routes/product.routes.js";
+import categoryRoutes from "./routes/category.routes.js";
+
 const app = express();
+
+app.use(helmet());
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
@@ -21,14 +22,11 @@ app.use(
     credentials: true,
   })
 );
-app.use(helmet());
-app.use(compression());
-app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
-app.use(limiter);
-
+// Mount routes
 app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // health check
 app.get("/health", (req, res) => res.json({ ok: true }));
@@ -36,7 +34,7 @@ app.get("/health", (req, res) => res.json({ ok: true }));
 // 404 handler
 app.use((req, res) => res.status(404).json({ error: "Not found" }));
 
-// global error handler (simple)
+// global error handler
 app.use((err, req, res, next) => {
   console.error(err);
   res

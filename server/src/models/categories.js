@@ -80,13 +80,13 @@ const categorySchema = new mongoose.Schema(
 categorySchema.index({ name: "text", description: "text" });
 
 // pre-validate: tự động tạo slug từ tên nếu chưa có slug hoặc chuẩn hóa slug nếu đã có slug
-categorySchema.pre("validate", function (next) {
+// => Sửa: không nhận `next` và không gọi `next()` (hook sync)
+categorySchema.pre("validate", function () {
   if (!this.slug && this.name) {
     this.slug = slugify(this.name);
   } else if (this.slug) {
     this.slug = slugify(this.slug);
   }
-  next();
 });
 
 // method:

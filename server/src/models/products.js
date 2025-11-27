@@ -107,7 +107,7 @@ productSchema.index({ title: "text", description: "text" });
 productSchema.index({ tags: 1 });
 
 // pre-save: nếu không có thumbnail, dùng ảnh đầu tiên làm thumbnail
-productSchema.pre("save", function (next) {
+productSchema.pre("save", function () {
   if (
     (!this.thumbnail || this.thumbnail === "") &&
     Array.isArray(this.images) &&
@@ -115,7 +115,6 @@ productSchema.pre("save", function (next) {
   ) {
     this.thumbnail = this.images[0];
   }
-  next();
 });
 
 const Product =

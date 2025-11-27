@@ -10,7 +10,7 @@ export function useProducts({
   const skip = Math.max(0, (page - 1) * (limit || 0));
 
   return useQuery({
-    queryKey: ["products", { page, limit, search, category }],
+    queryKey: ["products", { page, limit, skip, search, category }],
     queryFn: async ({ signal }) =>
       getProducts({ limit, skip, search, category, signal }),
     keepPreviousData: true,

@@ -83,7 +83,9 @@ export default function SearchPage() {
                 const slug =
                   typeof c === "string"
                     ? c
-                    : c.slug ?? c?.name ?? JSON.stringify(c);
+                    : c.slug ??
+                      c?.name?.toLowerCase().replace(/\s+/g, "-") ??
+                      JSON.stringify(c);
                 const label = typeof c === "string" ? c : c.name ?? slug;
                 return (
                   <Button

@@ -13,14 +13,14 @@ import {
   resendVerify,
   login,
 } from "../controller/auth.controller.js";
-import validate from "../middleware/validate.js";
+import validate from "../middlewares/validate.js";
 import {
   registerSchema,
   loginSchema,
   verifyEmailSchema,
   resendVerifySchema,
-} from "../validators/auth.validator.js";
-import { registerLimiter } from "../middleware/rateLimiter.js";
+} from "../middlewares/auth.validator.js";
+import { registerLimiter } from "../middlewares/rateLimiter.js";
 
 const router = express.Router();
 
